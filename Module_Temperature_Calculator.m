@@ -1,4 +1,4 @@
-% NOCT conditions: 800 W/m^2, w = 1 m/s, Ta= 20 deg C, module mounted on a rack 
+% NOCT conditions: 800 W/m^2, w = 1 m/s, Ta= 20 deg C, module mounted on a rack
 clear all
 clc
 %% Inputs
@@ -19,9 +19,14 @@ emis_top = 0.84;
 emis_back = 0.89;
 k = 0.026; % heat conductivity of air [W*m^-1*K^-1]
 % inst_conf = 0; % ? rack mount / direct mount / standoff
-sigma = 5.6704 * 10 ^ (-8); % ?
-v = 1.837*10^(-5); % viscosity of air [kg * m^-1 * s^-1]
-T_M = 293.15; % [K] Just for first iteration! Temperature of the module
+sigma = 5.6704 * 10 ^ (-8); % ?ARGHH!!! 5.6704*10^(-8)
+d_v = 1.837*10^(-5); % %kg/(m*s) dynamic viscocity of air
+v = d_v/1.204; %kinematic viscocity
+R_noct = 0.2929;
+
+% First iteration variables
+Tm = 293.15; % [K] Just for first iteration! Temperature of the module
+R = R_noct; % just for the first iteration
 
 %% Calculations
 
@@ -42,15 +47,13 @@ alpha = (1 - reflectivity)*(1 - eta); % absorptivity of a solar module
 
 for i = 1:3
     
-    hr_sky = emis_top * sigma * (T_M^2 + T_sky^2) * (T_M + T_sky);
-    hr_gr = emis_back * sigma * (T_M^2 + T_gr^2) * (T_M + T_gr);
+    hr_sky = emis_top*sigma*(Tm^2+T_sky^2)*(Tm+T_sky);
+    hr_gr = emis_back * sigma * (Tm^2 + T_gr^2) * (Tm + T_gr);
     Dh = (2*L*W) / (L + W);
-    Gr = ((9.8 * (1/Ta) * (T_M - Ta) * Dh^3) / v^2) * sind(theta_M); % Grashof number
+    Gr = ((9.8 * (1/Ta) * (Tm - Ta) * Dh^3) / v^2) * sind(theta_M); % Grashof number
     Pr = 0.708; % Prandtl number for air [-]
     Nu = 0.21 * (Gr * Pr)^0.32; % Nusselt number - expresses the ratio between conductive and convective heat transfer
     Re = (w*Dh)/v; % Reynolds number
-    %h_lam_forced = w^0.5;
-    %h_turb_forced = w^0.8;
 
     h_lam_forced = ((0.86 * Re^(-0.5)) / (Pr^0.67)) * 1.204 * 1005 * w;
     h_turb_forced = ((0.028 * Re^(-0.2)) / (Pr^0.4)) * 1.204 * 1005 * w;
@@ -63,16 +66,17 @@ for i = 1:3
     
     h_free = Nu * k / Dh;
     hc_top = (h_forced ^ 3 + h_free ^ 3)^(1/3); % it is called also h_mixed
-
-    R = (alpha * G_M - hc_top * (T_INOCT - Ta) - emis_top * sigma * (T_INOCT^4 - T_sky^4) ) / (hc_top * (T_INOCT - Ta) + emis_top * sigma * (T_INOCT^4 - T_sky^4) );
     
-    hc_bot = R * hc_top; % eq. G.17
+    % WHY DO WE USE R_NOCT AT ALL ITERATIONS?
+    % R = (alpha*G_M-hc_top*(T_INOCT-Ta)-emis_top*sigma*(T_INOCT^4-T_sky^4)) / (hc_top*(T_INOCT-Ta)+emis_top*sigma*(T_INOCT^4-T_sky^4) ); %G.16
+
+    hc_bot = R_noct * hc_top; % eq. G.17
 
     hc = hc_top + hc_bot;
 
-    T_M = (alpha * G_M + hc * Ta + hr_sky * T_sky + hr_gr * T_gr) / (hc + hr_sky + hr_gr);
+    Tm = (alpha * G_M + hc * Ta + hr_sky * T_sky + hr_gr * T_gr) / (hc + hr_sky + hr_gr);
     
-    R2 = (hc_bot * (T_INOCT - Ta) + emis_back * sigma * (T_INOCT^4  - T_gr^4)) / (hc_top * (T_INOCT - Ta) + emis_back * sigma * (T_INOCT^4 - Ta^4));
+    % R2 = (hc_bot * (T_INOCT - Ta) + emis_back * sigma * (T_INOCT^4  - T_gr^4)) / (hc_top * (T_INOCT - Ta) + emis_back * sigma * (T_INOCT^4 - Ta^4)); % G.14/15
     
     % Outputs for the user
     fprintf('Iteration: %d \n',i);
@@ -82,12 +86,12 @@ for i = 1:3
     fprintf('hc_B = %5.4f \n',hc_bot);
     fprintf('hr_sky = %5.4f \n',hr_sky);
     fprintf('hr_gr = %5.4f \n',hr_gr);
-    fprintf('T_M = %5.4f \n',T_M);
+    fprintf('T_M = %5.4f \n',Tm);
     %fprintf('Module temperature is: %5.1f Kelwins \n',T_M);
     fprintf(' \n');
     
 end
 
 %% ISSUES
-% h_forced is wrong
-% R shouldn't be negative!!!
+% kinematic viscosity of air!!!
+% line 26 - R_noct issue. Why do we use it?
