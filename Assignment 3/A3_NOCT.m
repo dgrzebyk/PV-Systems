@@ -57,9 +57,9 @@ h_free = Nu * k / Dh;
 hc_top = (h_forced ^ 3 + h_free ^ 3)^(1/3); % it is called also h_mixed
 
 % Calculation of R for NOCT
-nom = (alpha*800-hc_top*(327.15-Ta)-emis_top*sigma*(327.15^4-T_sky^4))
-denom = (hc_top*(T_INOCT-Ta)+emis_top*sigma*(T_INOCT^4-T_sky^4) )
-R_noct = nom / denom;
+num = alpha*G_M-hc_top*(T_INOCT-Ta)-emis_top*sigma*(T_INOCT^4-T_sky^4)
+den = hc_top*(T_INOCT-Ta)+emis_back*sigma*(T_INOCT^4-Ta^4) %G.16 
+R_noct = num / den;
 
 hc_bot = R_noct * hc_top; % eq. G.17
 

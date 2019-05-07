@@ -45,7 +45,7 @@ end
 
 alpha = (1 - reflectivity)*(1 - eta); % absorptivity of a solar module
 
-for i = 1:3
+for i = 1:1
 
     hr_sky = emis_top*sigma*(Tm^2+T_sky^2)*(Tm+T_sky);
     hr_gr = emis_back * sigma * (Tm^2 + T_gr^2) * (Tm + T_gr);
@@ -63,13 +63,15 @@ for i = 1:3
     else
         h_forced = h_turb_forced;
     end
-
+    
     h_free = Nu * k / Dh;
     hc_top = (h_forced ^ 3 + h_free ^ 3)^(1/3); % it is called also h_mixed
 
     % WHY DO WE USE R_NOCT AT ALL ITERATIONS?
-    % R = (alpha*G_M-hc_top*(T_INOCT-Ta)-emis_top*sigma*(T_INOCT^4-T_sky^4)) / (hc_top*(T_INOCT-Ta)+emis_top*sigma*(T_INOCT^4-T_sky^4) ); %G.16
-
+    num = alpha*G_M-hc_top*(T_INOCT-Ta)-emis_top*sigma*(T_INOCT^4-T_sky^4);
+    den = hc_top*(T_INOCT-Ta)+emis_back*sigma*(T_INOCT^4-Ta^4); %G.16 
+    R = num / den;
+    
     hc_bot = R_noct * hc_top; % eq. G.17
 
     hc = hc_top + hc_bot;
@@ -87,7 +89,10 @@ for i = 1:3
     fprintf('hr_sky = %5.4f \n',hr_sky);
     fprintf('hr_gr = %5.4f \n',hr_gr);
     fprintf('T_M = %5.4f \n',Tm);
-    %fprintf('Module temperature is: %5.1f Kelwins \n',T_M);
+    % fprintf('Module temperature is: %5.1f Kelwins \n',Tm);
     fprintf(' \n');
 
 end
+
+% Shouldn't R_noct be used just for the first iteration?
+% Why do we get negative R?

@@ -88,5 +88,4 @@ ylabel('Module temperature [°C]')
 title('Module temperature vs wind speed')
 
 %% ISSUES
-% kinematic viscosity of air!!!
-% line 26 - R_noct issue. Why do we use it?
+% How to plot wind speed = 0 m/s ?
